@@ -1,0 +1,43 @@
+
+
+CREATE TABLE IF NOT EXISTS public.doctors
+(
+    id uuid NOT NULL DEFAULT uuid_generate_v4(),
+    name character varying(150) COLLATE pg_catalog."default" NOT NULL,
+    slug character varying(150) COLLATE pg_catalog."default" NOT NULL,
+    post_name character varying(150) COLLATE pg_catalog."default" NOT NULL,
+    primary_specialization character varying(150) COLLATE pg_catalog."default" NOT NULL,
+    experience_year integer NOT NULL DEFAULT 0,
+    phone_number character varying(20) COLLATE pg_catalog."default" NOT NULL,
+    email character varying(150) COLLATE pg_catalog."default" NOT NULL,
+    profile_image text COLLATE pg_catalog."default",
+    short_description text COLLATE pg_catalog."default" NOT NULL,
+    full_bio text COLLATE pg_catalog."default" NOT NULL,
+    is_active boolean NOT NULL DEFAULT true,
+    is_featured boolean NOT NULL DEFAULT false,
+    created_at timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    other_services text[] COLLATE pg_catalog."default" DEFAULT '{}'::text[],
+    meta_title character varying(150) COLLATE pg_catalog."default" DEFAULT NULL::character varying,
+    meta_description character varying(150) COLLATE pg_catalog."default" DEFAULT NULL::character varying,
+    CONSTRAINT doctors_pkey PRIMARY KEY (id)
+)
+
+
+CREATE TABLE IF NOT EXISTS services (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+
+    title VARCHAR(200) NOT NULL,
+    description TEXT,
+    full_detail_description TEXT,
+
+    key_benefits TEXT[],         
+    commonly_used TEXT[],        
+
+    meta_title VARCHAR(200),
+    meta_description TEXT,
+
+    active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
