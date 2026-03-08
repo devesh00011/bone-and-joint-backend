@@ -1,5 +1,5 @@
 
-
+-- doctor table
 CREATE TABLE IF NOT EXISTS public.doctors
 (
     id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -23,21 +23,43 @@ CREATE TABLE IF NOT EXISTS public.doctors
     CONSTRAINT doctors_pkey PRIMARY KEY (id)
 )
 
-
+--service table
 CREATE TABLE IF NOT EXISTS services (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
 
-    title VARCHAR(200) NOT NULL,
-    description TEXT,
-    full_detail_description TEXT,
+    service_name VARCHAR(150) NOT NULL,
+    service_slug VARCHAR(150) UNIQUE NOT NULL,
 
-    key_benefits TEXT[],         
-    commonly_used TEXT[],        
+    short_description TEXT,
+    full_details TEXT,
+
+    service_image TEXT,
 
     meta_title VARCHAR(200),
     meta_description TEXT,
 
-    active BOOLEAN DEFAULT true,
+    key_benefits TEXT[],
+    commonly_used TEXT[],
+
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+
+
+-- appointments table
+CREATE TABLE IF NOT EXISTS appointments (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    doctor_id UUID NOT NULL,
+	appointment_day character varying(50),
+    patient_name VARCHAR(150),
+    patient_phone VARCHAR(20),
+    patient_email VARCHAR(150),
+    payment_method VARCHAR(150),
+    payment_proof_image TEXT,
+	
+    CONSTRAINT fk_doctor
+        FOREIGN KEY (doctor_id)
+        REFERENCES doctors(id)
+        ON DELETE CASCADE
 );

@@ -1,3 +1,4 @@
+import cloudinary from "../../config/cloudinary.js";
 import pool from "../../config/pgDb.js";
 
 export const saveDoctorService = async (doctorData) => {
@@ -72,7 +73,6 @@ export const saveDoctorService = async (doctorData) => {
   }
 };
 
-
 export const viewDoctorBySlugService = async (slug) => {
   try {
     const result = await pool.query(`
@@ -97,5 +97,118 @@ export const deleteDoctorService = async (id) => {
     return response
   } catch (error) {
     console.log(error.message)
+  }
+}
+
+export const viewDoctorByIdService = async (docId) => {
+  try {
+    const respnose = await pool.query(`
+        SELECT * from doctors 
+        WHERE id = $1
+        `, [docId])
+
+    return respnose.rows[0]
+  } catch (error) {
+    console.log(error)
+  }
+}
+
+export const updateDoctorService = async (req) => {
+  try {
+
+    const { docId } = req.params
+    const formDataObj = { ...req.body }
+
+    const other_servicesOrg = formDataObj.other_services
+      ? JSON.parse(formDataObj.other_services)
+      : [];
+
+    const is_active =
+      formDataObj.is_active !== undefined
+        ? formDataObj.is_active === "true" || formDataObj.is_active === true
+        : true;
+
+    const is_featured =
+      formDataObj.is_featured !== undefined
+        ? formDataObj.is_featured === "true" || formDataObj.is_featured === true
+        : true
+
+
+    let profile_image = null;
+
+    if (req.file) {
+
+      // 1. Agar old image hai to destroy karo
+      if (req.file.profile_image) {
+        const publicId = req.file.profile_image
+          .split("/")
+          .slice(-1)[0]
+          .split(".")[0];
+
+        await cloudinary.uploader.destroy(`doctors/${publicId}`);
+      }
+
+      // 2. Upload new image
+      const uploadResult = await new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          { folder: "doctors" },
+          (error, result) => {
+            if (error) reject(error);
+            else resolve(result);
+          }
+        );
+        stream.end(req.file.buffer);
+      });
+
+      // 🟢 3. Save new image URL
+      profile_image = uploadResult.secure_url;
+    }
+
+    const result = await pool.query(
+      `
+  UPDATE doctors 
+  SET 
+    name = $1,
+    slug = $2,
+    post_name = $3,
+    primary_specialization = $4,
+    experience_year = $5,
+    phone_number = $6,
+    email = $7,
+    profile_image = $8,
+    short_description = $9,
+    full_bio = $10,
+    is_active = $11,
+    is_featured = $12,
+    other_services = $13,
+    meta_title = $14,
+    meta_description = $15,
+    updated_at = NOW()
+  WHERE id = $16
+  RETURNING *
+  `,
+      [
+        formDataObj.name,
+        formDataObj.slug,
+        formDataObj.post_name,
+        formDataObj.primary_specialization,
+        formDataObj.experience_year,
+        formDataObj.phone_number,
+        formDataObj.email,
+        profile_image,
+        formDataObj.short_description,
+        formDataObj.full_bio,
+        is_active,
+        is_featured,
+        other_servicesOrg,
+        formDataObj.meta_title,
+        formDataObj.meta_description,
+        docId
+      ]
+    )
+
+    return result.rows[0]
+  } catch (error) {
+    console.log(error)
   }
 }

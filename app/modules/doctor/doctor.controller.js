@@ -1,6 +1,6 @@
 import cloudinary from "../../config/cloudinary.js";
 import pool from "../../config/pgDb.js";
-import { deleteDoctorService, saveDoctorService, viewDoctorBySlugService } from "./doctor.service.js";
+import { deleteDoctorService, saveDoctorService, updateDoctorService, viewDoctorByIdService, viewDoctorBySlugService } from "./doctor.service.js";
 
 export const saveDoctor = async (req, res) => {
   try {
@@ -66,7 +66,6 @@ export const saveDoctor = async (req, res) => {
     };
 
     const response = await saveDoctorService(doctorData);
-    console.log(response)
 
     return res.status(200).json({
       success: true,
@@ -93,7 +92,7 @@ export const viewDoctor = async (req, res) => {
 
     if (doctors.length == 0) {
       return res.status(200).json({
-        success: true,
+        success: false,
         msg: 'No Doctor Found',
         response: []
       })
@@ -118,7 +117,6 @@ export const viewDoctorBySlug = async (req, res) => {
   try {
     const { slug } = req.params
     const result = await viewDoctorBySlugService(slug)
-    console.log(result)
 
     return res.status(200).json({
       success: true,
@@ -147,12 +145,51 @@ export const deleteDoctor = async (req, res) => {
       success: true,
       msg: 'Doctor deleted successfully'
     })
-    console.log(result)
   } catch (error) {
     console.log(error.message || 'Server issue')
     return res.status(500).json({
-      success: true,
+      success: false,
       msg: 'Server issue'
+    })
+  }
+}
+
+export const viewDoctorById = async (req, res) => {
+  try {
+    const { docId } = req.params
+    const result = await viewDoctorByIdService(docId)
+    if (!result) return res.status(404).json({
+      success: false,
+      msg: 'Doctor not found'
+    })
+    else {
+      return res.status(200).json({
+        success: true,
+        msg: 'Specific Doctor data',
+        result
+      })
+    }
+  } catch (error) {
+    console.log(error.message || 'Server issue')
+    return res.status(500).json({
+      success: false,
+      msg: 'Server Error'
+    })
+  }
+}
+
+export const updateDoctor = async (req, res) => {
+  try {
+    const response = await updateDoctorService(req)
+    res.send({
+      success: true,
+      msg: 'Doctor Updated Successfully !',
+    })
+  } catch (error) {
+    console.log(error.message || 'Server Error')
+    return res.status(500).json({
+      success: false,
+      msg: 'Server Error'
     })
   }
 }
