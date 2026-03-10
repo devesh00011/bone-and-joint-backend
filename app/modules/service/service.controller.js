@@ -39,7 +39,7 @@ export const viewService = async (req, res) => {
             return res.status(200).json({
                 success: true,
                 msg: 'All Services data',
-                services
+                response : services
             })
         }
     } catch (error) {

@@ -78,7 +78,7 @@ export const changePasswordService = async (hashedPassword, admin_email) => {
                 RETURNING *
             `, [hashedPassword, admin_email])
 
-            console.log(result)
+        console.log(result)
         const finalRes = result.rows[0]
 
         return finalRes;
