@@ -63,3 +63,14 @@ CREATE TABLE IF NOT EXISTS appointments (
         REFERENCES doctors(id)
         ON DELETE CASCADE
 );
+
+
+CREATE TABLE IF NOT EXISTS contacts (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    full_name character varying(150),
+    email_id character varying(150),
+    phone_number character varying(20),
+    user_message character varying(300),
+    created_at timestamp default CURRENT_TIMESTAMP,
+    updated_at timestamp default CURRENT_TIMESTAMP
+)
