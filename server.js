@@ -11,8 +11,31 @@ import cors from 'cors'
 app.use(cors())
 app.use(express.json());
 
+const allowedOrigins = [
+  "http://localhost:3000",
+  "https://www.boneandjointhospital.co.in"
+];
+
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      // allow requests with no origin (like Postman)
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("CORS not allowed"));
+      }
+    },
+    credentials: true
+  })
+);
+
 //primary router (index)
 app.use("/web", indexRouter);
+
+
 
 // universal route for checking
 app.get("/", (req, res) => {
@@ -22,6 +45,8 @@ app.get("/", (req, res) => {
     timestamp: new Date(),
   });
 });
+
+
 
 const startServer = async () => {
   try {
