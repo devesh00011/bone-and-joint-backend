@@ -86,6 +86,7 @@ export const viewDoctor = async (req, res) => {
   try {
     const response = await pool.query(`
         SELECT * FROM doctors
+        ORDER BY created_at ASC
       `)
 
     const doctors = response.rows

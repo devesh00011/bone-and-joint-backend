@@ -27,6 +27,7 @@ export const viewService = async (req, res) => {
     try {
         const result = await pool.query(`
                 SELECT * FROM services 
+                ORDER BY created_at ASC
             `)
 
         const services = result.rows
@@ -39,7 +40,7 @@ export const viewService = async (req, res) => {
             return res.status(200).json({
                 success: true,
                 msg: 'All Services data',
-                response : services
+                response: services
             })
         }
     } catch (error) {

@@ -1,5 +1,6 @@
 import dotenv from "dotenv";
 dotenv.config();
+import cors from 'cors'
 import http from "http";
 import express from "express";
 import indexRouter from "./app/modules/indexRouter.js";
@@ -7,12 +8,13 @@ import pool from "./app/config/pgDb.js";
 import bcrypt from "bcrypt";
 
 const app = express();
-import cors from 'cors'
-app.use(cors())
 app.use(express.json());
 
+
+// cors working
 const allowedOrigins = [
   "http://localhost:3000",
+  "http://localhost:3001",
   "https://www.boneandjointhospital.co.in",
   "https://admin.boneandjointhospital.co.in"
 ];
@@ -20,6 +22,8 @@ const allowedOrigins = [
 app.use(
   cors({
     origin: function (origin, callback) {
+      console.log("Incoming origin:", origin); // 👈 ADD THIS
+
       // allow requests with no origin (like Postman)
       if (!origin) return callback(null, true);
 
@@ -33,12 +37,13 @@ app.use(
   })
 );
 
+
 //primary router (index)
 app.use("/web", indexRouter);
 
 
 
-// universal route for checking
+// universal route for checking backend running or not
 app.get("/", (req, res) => {
   res.json({
     success: true,
@@ -73,17 +78,17 @@ const startServer = async () => {
     // 2️⃣ Check admin exist
     const adminCheck = await pool.query(
       "SELECT * FROM admin_user WHERE admin_email=$1",
-      ["Deveshsolanki05@gmail.com"]
+      ["deveshsolanki05@gmail.com"]
     );
 
     if (adminCheck.rows.length === 0) {
 
       // bcrypt hash
-      const hashedPassword = await bcrypt.hash("admin123", 10);
+      const hashedPassword = await bcrypt.hash("Devesh123", 10);
 
       await pool.query(
         "INSERT INTO admin_user (admin_email, admin_password) VALUES ($1,$2)",
-        ["Deveshsolanki05@gmail.com", hashedPassword]
+        ["deveshsolanki05@gmail.com", hashedPassword]
       );
 
       console.log("Default admin created ✔");
