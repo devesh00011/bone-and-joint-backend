@@ -74,3 +74,41 @@ CREATE TABLE IF NOT EXISTS contacts (
     created_at timestamp default CURRENT_TIMESTAMP,
     updated_at timestamp default CURRENT_TIMESTAMP
 )
+
+-- blog category table
+CREATE TABLE IF NOT EXISTS blog_category (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    category_name character varying(150) NOT NULL,
+    created_at timestamp default CURRENT_TIMESTAMP,
+    updated_at timestamp default CURRENT_TIMESTAMP
+)
+
+
+-- blogs table
+CREATE TABLE IF NOT EXISTS blogs (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+
+    blog_title VARCHAR(200) NOT NULL,
+    blog_slug VARCHAR(200) UNIQUE NOT NULL,
+
+    blog_full_description TEXT,
+
+    blog_image TEXT,
+
+    blog_author_name VARCHAR(150),
+
+    blog_read_time INT, -- in minutes (e.g. 5 min read)
+
+    blog_category_id UUID,
+
+    is_active BOOLEAN DEFAULT true,
+
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+
+    meta_title VARCHAR(200),
+    meta_description VARCHAR(200),
+    
+    FOREIGN KEY (blog_category_id) REFERENCES blog_category(id) ON DELETE SET NULL
+);
+

@@ -35,21 +35,25 @@ export const checkEmailAndPasswordService = async (admin_email, admin_password) 
 
 export const sendOtpService = async (admin) => {
     try {
-        // generate OTP
         const otp = Math.floor(100000 + Math.random() * 900000)
+        const expiry = Date.now() + 5 * 60 * 1000
 
-        const expiry = Date.now() + 5 * 60 * 1000   // 5 minutes
-
-        // save OTP in DB
         await pool.query(
             `UPDATE admin_user SET otp=$1 , otp_expire=$2 where id=$3`,
             [otp, expiry, admin.id]
         )
 
-        // send OTP email
-        await sendOtpMail(admin.admin_email, otp)
+        console.log("OTP:", otp)
+
+        const mailRes = await sendOtpMail(admin.admin_email, otp)
+
+        console.log("MAIL RESPONSE:", mailRes)
+
+        return mailRes
+
     } catch (error) {
-        console.log(error)
+        console.log("OTP SERVICE ERROR ❌:", error)
+        throw error   // 🔥 VERY IMPORTANT
     }
 }
 

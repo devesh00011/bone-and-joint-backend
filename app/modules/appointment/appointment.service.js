@@ -73,8 +73,8 @@ export const deleteAppointmentByIdService = async (id) => {
                 DELETE FROM appointments
                 WHERE id = $1
             `, [id])
-        
-            return response;
+
+        return response;
     } catch (error) {
         console.log(error)
     }

@@ -27,8 +27,12 @@ export const saveUserContact = async (req, res) => {
 export const viewUserContact = async (req, res) => {
     try {
         const response = await pool.query(`
-                SELECT * FROM contacts  
-            `)
+    SELECT 
+        c.*,
+        TO_CHAR(c.created_at AT TIME ZONE 'Asia/Kolkata', 'HH12:MI AM') AS time_only
+    FROM contacts c
+    ORDER BY c.created_at DESC
+`)
         const contactsQueries = response.rows
         if (!contactsQueries) {
             return res.status(404).json({
