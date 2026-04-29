@@ -11,7 +11,7 @@ indexRouter.use('/appointment', appointmentRoute)
 indexRouter.use('/service', serviceRoute)
 indexRouter.use('/admin', adminRoute)
 indexRouter.use('/contact', contactRoute)
-indexRouter.use('/blog',blogRoute)
+indexRouter.use('/blog', blogRoute)
 
 
 

@@ -1,7 +1,6 @@
 
 -- doctor table
-CREATE TABLE IF NOT EXISTS public.doctors
-(
+CREATE TABLE IF NOT EXISTS public.doctors (
     id uuid NOT NULL DEFAULT uuid_generate_v4(),
     name character varying(150) COLLATE pg_catalog."default" NOT NULL,
     slug character varying(150) COLLATE pg_catalog."default" NOT NULL,
@@ -108,7 +107,26 @@ CREATE TABLE IF NOT EXISTS blogs (
 
     meta_title VARCHAR(200),
     meta_description VARCHAR(200),
-    
+
     FOREIGN KEY (blog_category_id) REFERENCES blog_category(id) ON DELETE SET NULL
 );
 
+
+
+CREATE TABLE blog_sections (
+    id SERIAL PRIMARY KEY,
+    blog_id UUID NOT NULL,  
+
+    section_title TEXT,
+    section_short_description TEXT,
+    section_full_description TEXT,
+    section_image TEXT,
+    sub_content JSONB,
+
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_blog
+        FOREIGN KEY(blog_id)
+        REFERENCES blogs(id)
+        ON DELETE CASCADE
+);
