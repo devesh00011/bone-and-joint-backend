@@ -43,7 +43,7 @@ export const sendOtpService = async (admin) => {
             [otp, expiry, admin.id]
         )
 
-        console.log("OTP:", otp)
+        // console.log("OTP:", otp)
 
         const mailRes = await sendOtpMail(admin.admin_email, otp)
 
@@ -82,7 +82,7 @@ export const changePasswordService = async (hashedPassword, admin_email) => {
                 RETURNING *
             `, [hashedPassword, admin_email])
 
-        console.log(result)
+        // console.log(result)
         const finalRes = result.rows[0]
 
         return finalRes;

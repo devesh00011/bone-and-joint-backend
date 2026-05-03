@@ -12,7 +12,7 @@ export const addBlogCategory = async (req, res) => {
         })
         else {
             const result = await addblogCategoryService(blogCategory)
-            console.log(result)
+            // console.log(result)
             res.status(200).json({
                 success: true,
                 msg: 'Category Added Successfully'
@@ -56,11 +56,20 @@ export const viewBlogCategory = async (req, res) => {
 
 export const addBlog = async (req, res) => {
     try {
+        if (!req.file) {
+            return res.status(409).json({
+                success: false,
+                msg: 'Blog image is required'
+            });
+        }
         const result = await saveBlogService(req)
-        if (!result) return res.status(409).json({
-            success: false,
-            msg: 'Slug Already Added Before'
-        })
+        if (!result) {
+            return res.status(400).json({
+                success: false,
+                msg: 'Blog not created'
+            });
+        }
+
         else {
             return res.status(200).json({
                 success: true,
@@ -68,11 +77,20 @@ export const addBlog = async (req, res) => {
             })
         }
     } catch (error) {
-        console.log(error.message || 'Server Error')
+        console.log(error.message || 'Server Error');
+
+        // handle duplicate slug properly
+        if (error.code === '23505') {
+            return res.status(409).json({
+                success: false,
+                msg: 'Slug already exists'
+            });
+        }
+
         return res.status(500).json({
             success: false,
             msg: 'Server Error'
-        })
+        });
 
     }
 }
@@ -90,7 +108,46 @@ export const viewBlogs = async (req, res) => {
                     LEFT JOIN blog_sections bs
                         ON b.id = bs.blog_id
 
-                        WHERE is_active = true
+                    GROUP BY b.id
+                    ORDER BY b.created_at DESC
+                    
+                `)
+
+        const blogs = result.rows
+
+        if (!blogs) return res.status(404).json({
+            success: false,
+            msg: 'Blogs Not Found'
+        })
+        else {
+            return res.status(200).json({
+                success: true,
+                msg: 'All Blogs Data',
+                blogs
+            })
+        }
+    } catch (error) {
+        console.log(error.message || 'Server Error')
+        return res.status(500).json({
+            success: false,
+            msg: 'Server Error'
+        })
+    }
+}
+
+export const viewBlogsActive = async (req, res) => {
+    try {
+        const result = await pool.query(`
+                    SELECT 
+                        b.*,
+                        COALESCE(
+                            json_agg(bs.*) FILTER (WHERE bs.id IS NOT NULL),
+                            '[]'
+                        ) AS sections
+                    FROM blogs b
+                    LEFT JOIN blog_sections bs
+                        ON b.id = bs.blog_id
+                    WHERE is_active = true
                     GROUP BY b.id
                     ORDER BY b.created_at DESC
                     
@@ -128,7 +185,7 @@ export const addSectionInBlog = async (req, res) => {
                 msg: result.msg || 'Cannot add sections of blog in db'
             })
         }
-        console.log(result)
+        // console.log(result)
 
         return res.status(200).json({
             success: true,
@@ -282,4 +339,170 @@ export const fetchBlogByCategory = async (req, res) => {
     }
 }
 
+export const fetchBlogBySlug = async (req, res) => {
+    try {
+        const { slug } = req.body
+        const response = await pool.query(`
+                        SELECT 
+                b.*,
+                COALESCE(
+                    json_agg(bs.*) FILTER (WHERE bs.id IS NOT NULL),
+                    '[]'
+                ) AS blog_sections
+            FROM blogs b
+            LEFT JOIN blog_sections bs
+                ON b.id = bs.blog_id
+            WHERE b.blog_slug = $1
+            GROUP BY b.id;    
+                        `, [slug])
 
+        if (response.length == 0) {
+            return res.status(404).json({
+                success: false,
+                msg: 'Blog Not Found '
+            })
+        }
+        else {
+            const result = response.rows
+            // console.log(result)
+            return res.status(200).json({
+                success: true,
+                msg: 'Blog Data By Slug',
+                result
+            })
+
+        }
+    } catch (error) {
+        console.log(error.message || 'Server Error')
+        return res.status(500).json({
+            success: false,
+            msg: 'Server Error'
+        })
+    }
+}
+
+export const deleteBlogById = async (req, res) => {
+    try {
+        const { id } = req.params
+
+        const result = await pool.query(
+            `DELETE FROM blogs WHERE id = $1`,
+            [id]
+        )
+
+
+        if (!result) {
+            return res.status(400).json({
+                success: false,
+                msg: 'Cannot Delete Blog'
+            })
+        }
+
+        else {
+            return res.status(200).json({
+                success: true,
+                message: "Blog deleted successfully"
+            })
+
+        }
+
+    } catch (error) {
+        console.log(error.message || 'Server Error')
+        return res.status(500).json({
+            success: false,
+            msg: 'Server Error'
+        })
+    }
+}
+
+export const deleteCategoryById = async (req, res) => {
+    try {
+        const { id } = req.params
+        const result = await pool.query(`
+                DELETE FROM blog_category 
+                WHERE id = $1 
+                RETURNING *  
+            `, [id])
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({
+                success: false,
+                msg: 'Cannot Delete Category'
+            })
+        }
+        else {
+            return res.status(200).json({
+                success: true,
+                msg: 'Category Deleted Successfully !'
+            })
+        }
+    } catch (error) {
+        console.log(error.message || 'Server Error')
+        return res.status(500).json({
+            success: false,
+            msg: 'Server Error'
+        })
+    }
+}
+
+export const viewBlogCategoryById = async (req, res) => {
+    try {
+        const { id } = req.params
+        const result = await pool.query(`
+                SELECT * FROM blog_category
+                WHERE id = $1
+            `, [id])
+
+        if (result.rowCount == 0) {
+            return res.status(404).json({
+                success: false,
+                msg: 'Category Not Found'
+            })
+        }
+        else {
+            return res.status(200).json({
+                success: true,
+                msg: 'Category Data By Id',
+                category: result.rows[0]
+            })
+        }
+    } catch (error) {
+        console.log(error.message || 'Server Error')
+        return res.status(500).json({
+            success: false,
+            msg: 'Server Error'
+        })
+    }
+}
+
+export const updateCategoryById = async (req, res) => {
+    try {
+        const { id } = req.params
+        const { blogCategory } = req.body
+        const result = await pool.query(`
+                UPDATE blog_category
+                SET category_name = $1
+                WHERE id = $2
+                RETURNING * 
+            `, [blogCategory, id])
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({
+                success: false,
+                msg: 'Category Not Found'
+            })
+        }
+        else {
+            return res.status(200).json({
+                success: true,
+                msg: 'Category Updated Successfully !'
+            })
+        }
+    } catch (error) {
+        console.log(error.message || 'Server Error')
+        return res.status(500).json({
+            success: false,
+            msg: 'Server Error'
+        })
+    }
+}

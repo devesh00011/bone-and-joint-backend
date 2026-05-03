@@ -10,6 +10,8 @@
 # Production
 /build
 
+alltables.sql
+
 # Logs
 npm-debug.log*
 yarn-debug.log*

@@ -30,6 +30,7 @@ export const saveBlogService = async (req) => {
                 ? formDataObj.is_active === "true" || formDataObj.is_active === true
                 : true;
 
+
         let blog_image = null;
 
 
@@ -67,6 +68,9 @@ export const saveBlogService = async (req) => {
                 RETURNING *;
             `
 
+        const categoryId = blog_category_id ? blog_category_id : null;
+
+
         const values = [
             blog_title,
             blog_slug,
@@ -74,7 +78,7 @@ export const saveBlogService = async (req) => {
             blog_image,
             blog_author_name,
             blog_read_time,
-            blog_category_id,
+            categoryId,
             is_active,
             meta_title,
             meta_description

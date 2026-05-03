@@ -2,12 +2,13 @@ import pool from "../../config/pgDb.js"
 import { changePasswordService, checkEmailAndPasswordService, checkEmailExistsService, sendOtpService } from "./admin.service.js"
 import jwt from "jsonwebtoken"
 import bcrypt from 'bcrypt'
+import { sendOtpMail } from "../../config/nodemailer.js"
 
 export const adminLogin = async (req, res) => {
     try {
 
         const { admin_email, admin_password } = req.body
-        console.log(req.body)
+        // console.log(req.body)
 
         const admin = await checkEmailAndPasswordService(admin_email, admin_password)
 
