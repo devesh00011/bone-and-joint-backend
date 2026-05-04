@@ -178,3 +178,58 @@ export const deleteServiceByIdService = async (id) => {
         console.log(error)
     }
 }
+
+export const createServiceVideos = async (req) => {
+    try {
+        const { service_id, service_video, service_testimonials } = req.body;
+
+        const query = `
+                        INSERT INTO service_videos (
+                service_id,
+                service_video,
+                service_testimonials
+            )
+            VALUES ($1, $2, $3)
+            ON CONFLICT (service_id)
+            DO UPDATE SET
+                service_video = EXCLUDED.service_video,
+                service_testimonials = EXCLUDED.service_testimonials
+            RETURNING *;
+                    `;
+
+        const values = [service_id, service_video, service_testimonials];
+
+        const result = await pool.query(query, values);
+
+        return result;
+
+    } catch (error) {
+        console.log(error.message);
+        throw error;
+    }
+};
+
+export const UpdateServicesVideosService = async (req) => {
+    try {
+        const { service_id, service_video, service_testimonials } = req.body;
+
+        const query = `
+            UPDATE service_videos
+            SET 
+                service_video = $1,
+                service_testimonials = $2
+            WHERE service_id = $3
+            RETURNING *;
+        `;
+
+        const values = [service_video, service_testimonials, service_id];
+
+        const result = await pool.query(query, values);
+
+        return result;
+
+    } catch (error) {
+        console.log(error.message);
+        throw error;
+    }
+};

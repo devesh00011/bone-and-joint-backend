@@ -115,9 +115,8 @@ export const viewDoctorByIdService = async (docId) => {
 
 export const updateDoctorService = async (req) => {
   try {
-
-    const { docId } = req.params
-    const formDataObj = { ...req.body }
+    const { docId } = req.params;
+    const formDataObj = { ...req.body };
 
     const other_servicesOrg = formDataObj.other_services
       ? JSON.parse(formDataObj.other_services)
@@ -131,24 +130,33 @@ export const updateDoctorService = async (req) => {
     const is_featured =
       formDataObj.is_featured !== undefined
         ? formDataObj.is_featured === "true" || formDataObj.is_featured === true
-        : true
+        : true;
 
+    // 1. Get existing doctor (IMPORTANT for keeping old image)
+    const existingDoctor = await pool.query(
+      `SELECT profile_image FROM doctors WHERE id = $1`,
+      [docId]
+    );
 
-    let profile_image = null;
+    let profile_image = existingDoctor.rows[0]?.profile_image || null;
 
+    // 2. If new file uploaded
     if (req.file) {
+      // delete old image only if exists
+      if (existingDoctor.rows[0]?.profile_image) {
+        try {
+          const publicId = existingDoctor.rows[0].profile_image
+            .split("/")
+            .slice(-1)[0]
+            .split(".")[0];
 
-      // 1. Agar old image hai to destroy karo
-      if (req.file.profile_image) {
-        const publicId = req.file.profile_image
-          .split("/")
-          .slice(-1)[0]
-          .split(".")[0];
-
-        await cloudinary.uploader.destroy(`doctors/${publicId}`);
+          await cloudinary.uploader.destroy(`doctors/${publicId}`);
+        } catch (err) {
+          console.log("Cloudinary delete error:", err);
+        }
       }
 
-      // 2. Upload new image
+      // upload new image
       const uploadResult = await new Promise((resolve, reject) => {
         const stream = cloudinary.uploader.upload_stream(
           { folder: "doctors" },
@@ -160,33 +168,33 @@ export const updateDoctorService = async (req) => {
         stream.end(req.file.buffer);
       });
 
-      // 🟢 3. Save new image URL
       profile_image = uploadResult.secure_url;
     }
 
+    // 3. Update query
     const result = await pool.query(
       `
-  UPDATE doctors 
-  SET 
-    name = $1,
-    slug = $2,
-    post_name = $3,
-    primary_specialization = $4,
-    experience_year = $5,
-    phone_number = $6,
-    email = $7,
-    profile_image = $8,
-    short_description = $9,
-    full_bio = $10,
-    is_active = $11,
-    is_featured = $12,
-    other_services = $13,
-    meta_title = $14,
-    meta_description = $15,
-    updated_at = NOW()
-  WHERE id = $16
-  RETURNING *
-  `,
+      UPDATE doctors 
+      SET 
+        name = $1,
+        slug = $2,
+        post_name = $3,
+        primary_specialization = $4,
+        experience_year = $5,
+        phone_number = $6,
+        email = $7,
+        profile_image = $8,
+        short_description = $9,
+        full_bio = $10,
+        is_active = $11,
+        is_featured = $12,
+        other_services = $13,
+        meta_title = $14,
+        meta_description = $15,
+        updated_at = NOW()
+      WHERE id = $16
+      RETURNING *
+      `,
       [
         formDataObj.name,
         formDataObj.slug,
@@ -203,12 +211,13 @@ export const updateDoctorService = async (req) => {
         other_servicesOrg,
         formDataObj.meta_title,
         formDataObj.meta_description,
-        docId
+        docId,
       ]
-    )
+    );
 
-    return result.rows[0]
+    return result.rows[0];
   } catch (error) {
-    console.log(error)
+    console.log("updateDoctorService error:", error);
+    throw error;
   }
-}
+};

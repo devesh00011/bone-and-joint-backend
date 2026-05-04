@@ -1,5 +1,5 @@
 import pool from "../../config/pgDb.js"
-import { addServiceService, deleteServiceByIdService, updateServiceByIdService, viewServiceByIdService } from "./service.service.js"
+import { addServiceService, createServiceVideos, deleteServiceByIdService, updateServiceByIdService, UpdateServicesVideosService, viewServiceByIdService } from "./service.service.js"
 
 export const addService = async (req, res) => {
     try {
@@ -26,9 +26,15 @@ export const addService = async (req, res) => {
 export const viewService = async (req, res) => {
     try {
         const result = await pool.query(`
-                SELECT * FROM services 
-                ORDER BY created_at ASC
-            `)
+            SELECT 
+                    s.*, 
+                    sv.service_video, 
+                    sv.service_testimonials
+                FROM services s
+                LEFT JOIN service_videos sv 
+                    ON s.id = sv.service_id
+                ORDER BY s.created_at DESC;
+                            `)
 
         const services = result.rows
 
@@ -117,3 +123,88 @@ export const deleteService = async (req, res) => {
         })
     }
 }
+
+export const addServicesVideos = async (req, res) => {
+    try {
+        const result = await createServiceVideos(req);
+
+        if (!result || result.rowCount === 0) {
+            return res.status(404).json({
+                success: false,
+                msg: 'Service Not Found'
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            msg: 'Service Videos Created Successfully',
+            data: result.rows[0]
+        });
+
+    } catch (error) {
+        console.log(error.message || error);
+
+        return res.status(500).json({
+            success: false,
+            msg: 'Server Error'
+        });
+    }
+};
+
+export const getServiceDatabyId = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const result = await pool.query(`
+            SELECT * FROM service_videos
+            WHERE service_id = $1
+        `, [id]);
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({
+                success: false,
+                msg: 'Cannot find any Data'
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            msg: 'Specific Service Data',
+            data: result.rows[0]
+        });
+
+    } catch (error) {
+        console.log(error.message || error);
+
+        return res.status(500).json({
+            success: false,
+            msg: 'Server Error'
+        });
+    }
+};
+
+export const UpdateServicesVideos = async (req, res) => {
+    try {
+        const result = await UpdateServicesVideosService(req);
+
+        if (!result || result.rowCount === 0) {
+            return res.status(404).json({
+                success: false,
+                msg: 'Service Not Found'
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            msg: 'Videos Updated Successfully',
+        });
+
+    } catch (error) {
+        console.log(error.message || error);
+
+        return res.status(500).json({
+            success: false,
+            msg: 'Server Error'
+        });
+    }
+};

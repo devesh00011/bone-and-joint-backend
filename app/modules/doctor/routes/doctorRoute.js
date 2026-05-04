@@ -11,6 +11,4 @@ doctorRoute.post('/update/:docId', upload.single('profile_image'), updateDoctor)
 
 
 
-
-
 export default doctorRoute;
