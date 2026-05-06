@@ -88,9 +88,10 @@ export const viewServiceByIdService = async (id) => {
 
 export const updateServiceByIdService = async (req) => {
     try {
-        const { id } = req.params
-        const formDataObj = { ...req.body }
+        const { id } = req.params;
+        const formDataObj = { ...req.body };
 
+        // ✅ Parse JSON safely
         const key_benefits = formDataObj.key_benefits
             ? JSON.parse(formDataObj.key_benefits)
             : [];
@@ -99,24 +100,43 @@ export const updateServiceByIdService = async (req) => {
             ? JSON.parse(formDataObj.commonly_used)
             : [];
 
-        let service_image = null;
+        // ✅ 1. Get existing service
+        const existing = await pool.query(
+            "SELECT * FROM services WHERE id=$1",
+            [id]
+        );
 
+        if (existing.rows.length === 0) {
+            throw new Error("Service not found");
+        }
+
+        const oldData = existing.rows[0];
+
+        let service_image = oldData.service_image; // ✅ default = old image
+
+        // ✅ 2. If new image uploaded
         if (req.file) {
 
-            // 1. Agar old image hai to destroy karo
-            if (req.file.service_image) {
-                const publicId = req.file.service_image
-                    .split("/")
-                    .slice(-1)[0]
-                    .split(".")[0];
+            // 🔥 Delete old image from Cloudinary (if exists)
+            if (oldData.service_image) {
+                try {
+                    const publicId = oldData.service_image
+                        .split("/")
+                        .pop()
+                        .split(".")[0];
 
-                await cloudinary.uploader.destroy(`services/${publicId}`);
+                    await cloudinary.uploader.destroy(`services/${publicId}`);
+                } catch (err) {
+                    console.log("Old image delete failed:", err.message);
+                }
             }
 
-            // 2. Upload new image
+          
+
+            // 🔥 Upload new image
             const uploadResult = await new Promise((resolve, reject) => {
                 const stream = cloudinary.uploader.upload_stream(
-                    { folder: "doctors" },
+                    { folder: "services" }, // ✅ FIXED folder
                     (error, result) => {
                         if (error) reject(error);
                         else resolve(result);
@@ -125,46 +145,46 @@ export const updateServiceByIdService = async (req) => {
                 stream.end(req.file.buffer);
             });
 
-
-            // 🟢 3. Save new image URL
-            service_image = uploadResult.secure_url;
+            service_image = uploadResult.secure_url; // ✅ new image
         }
 
-        const result = await pool.query(`
-          UPDATE services
-          SET 
-          service_name = $1,
-          service_slug = $2,
-          short_description = $3,
-          full_details = $4,
-          service_image = $5,
-          meta_title = $6,
-          meta_description = $7,
-          key_benefits = $8,
-          commonly_used = $9,
-          updated_at = NOW()
-          WHERE id = $10
-          RETURNING *
-            `,
+        // ✅ 3. Update DB (safe partial update)
+        const result = await pool.query(
+            `UPDATE services
+             SET 
+                service_name = $1,
+                service_slug = $2,
+                short_description = $3,
+                full_details = $4,
+                service_image = $5,
+                meta_title = $6,
+                meta_description = $7,
+                key_benefits = $8,
+                commonly_used = $9,
+                updated_at = NOW()
+             WHERE id = $10
+             RETURNING *`,
             [
-                formDataObj.service_name,
-                formDataObj.service_slug,
-                formDataObj.short_description,
-                formDataObj.full_details,
-                service_image,
-                formDataObj.meta_title,
-                formDataObj.meta_description,
-                key_benefits,
-                commonly_used,
+                formDataObj.service_name ?? oldData.service_name,
+                formDataObj.service_slug ?? oldData.service_slug,
+                formDataObj.short_description ?? oldData.short_description,
+                formDataObj.full_details ?? oldData.full_details,
+                service_image, // ✅ safe
+                formDataObj.meta_title ?? oldData.meta_title,
+                formDataObj.meta_description ?? oldData.meta_description,
+                key_benefits.length ? key_benefits : oldData.key_benefits,
+                commonly_used.length ? commonly_used : oldData.commonly_used,
                 id
             ]
-        )
+        );
 
-        return result.rows[0]
+        return result.rows[0];
+
     } catch (error) {
-        console.log(error)
+        console.log(error.message);
+        throw error;
     }
-}
+};
 
 export const deleteServiceByIdService = async (id) => {
     try {

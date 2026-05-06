@@ -11,12 +11,18 @@ const app = express();
 app.use(express.json());
 
 
+
 // cors working
+
 const allowedOrigins = [
   "http://localhost:3000",
   "http://localhost:3001",
+
+  "https://boneandjointhospital.co.in",
   "https://www.boneandjointhospital.co.in",
-  "https://admin.boneandjointhospital.co.in"
+
+  "https://admin.boneandjointhospital.co.in",
+  "http://admin.boneandjointhospital.co.in"
 ];
 
 app.use(
