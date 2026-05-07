@@ -131,7 +131,7 @@ export const updateServiceByIdService = async (req) => {
                 }
             }
 
-          
+
 
             // 🔥 Upload new image
             const uploadResult = await new Promise((resolve, reject) => {
